@@ -1,0 +1,21 @@
+# Environment variables (contains your API key!)
+.env
+
+# Virtual environment
+venv/
+
+# ChromaDB (too large for GitHub)
+data/chroma_db/
+
+# SEC filings (too large for GitHub)
+data/sec-edgar-filings/
+
+# Python cache
+__pycache__/
+*.pyc
+.DS_Store
+src/__pycache__/
+EOF 
+
+
+cat .gitignore 
