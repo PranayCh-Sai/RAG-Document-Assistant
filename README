@@ -1,0 +1,166 @@
+# SEC Filing Intelligence Assistant 📊
+
+A production-grade Retrieval-Augmented Generation (RAG) system that lets you ask 
+natural-language questions over real SEC 10-K annual filings from Apple, Microsoft, 
+and Tesla — and get back grounded, cited answers powered by Claude AI.
+
+I built this project to develop hands-on RAG experience while job hunting after 
+completing my Masters in October 2025. I'm currently doing a Coursera course on 
+RAG and Agentic AI, and I wanted a real project to back that up rather than just 
+a certificate on its own.
+
+---
+
+## What it does
+
+You can ask questions like:
+- *"What was Apple's total revenue in 2023?"*
+- *"What are Microsoft's main cloud products?"*
+- *"How did Tesla's automotive revenue change between 2023 and 2024?"*
+
+And get back accurate, cited answers pulled directly from the actual SEC filings — 
+not from the model's training memory.
+
+---
+
+## How it works
+
+```
+SEC 10-K Filings (Apple, Microsoft, Tesla)
+        ↓
+HTML Cleaning → Text Chunking (1000 chars / 200 overlap)
+        ↓
+Sentence Transformer Embeddings → ChromaDB Vector Store
+        ↓
+User Question → Vector Similarity Search → Top 5 Relevant Chunks
+        ↓
+Claude API reads chunks → Cited Answer with Source Attribution
+```
+
+---
+
+## RAGAS Evaluation Scores
+
+One of the key parts of this project was not just building the RAG pipeline but 
+actually measuring how good it is. I used RAGAS — an open source evaluation 
+framework — to score the system across 4 metrics:
+
+| Metric | Score | What it means |
+|---|---|---|
+| Faithfulness | 1.000 | Claude never hallucinated — every fact came from the actual filings |
+| Answer Relevancy | 0.890 | Answers were highly relevant to the questions asked |
+| Context Precision | 0.815 | Most retrieved chunks were genuinely useful |
+| Context Recall | 1.000 | All the information needed to answer was successfully retrieved |
+
+---
+
+## Tech Stack
+
+| Tool | Purpose |
+|---|---|
+| LangChain | Orchestration framework |
+| ChromaDB | Local vector database |
+| Claude API (Anthropic) | Answer generation |
+| all-MiniLM-L6-v2 | Sentence transformer embeddings |
+| RAGAS | Evaluation framework |
+| Streamlit | Interactive frontend |
+| BeautifulSoup | HTML cleaning for SEC filings |
+
+---
+
+## Challenges I ran into
+
+This wasn't a smooth build — a few things that took real debugging:
+
+- **M1 Mac dependency conflicts** — PyTorch 2.4+ requires Python 3.11 but several 
+  other libraries needed 3.10, so I had to carefully pin versions to get everything 
+  working together
+- **Raw HTML in SEC filings** — the 10-K filings are stored as HTML files, so the 
+  first version of the retriever was returning chunks full of CSS and div tags. 
+  I added a BeautifulSoup cleaning step that stripped all markup before chunking, 
+  which significantly improved answer quality
+- **NumPy version conflict** — the latest NumPy (2.x) broke several ML libraries 
+  that were compiled against NumPy 1.x, requiring a downgrade to get the embedding 
+  pipeline stable
+- **RAGAS API changes** — RAGAS had breaking changes between versions during 
+  development, requiring adjustments to how the LLM and embeddings were wired in
+
+---
+
+## Project Structure
+
+```
+rag-document-assistant/
+├── src/
+│   ├── ingest.py        # Loads, cleans, chunks and embeds SEC filings into ChromaDB
+│   ├── retriever.py     # Vector similarity search over the embedded chunks
+│   ├── generator.py     # Sends retrieved chunks + question to Claude, returns cited answer
+│   └── evaluate.py      # RAGAS evaluation framework — scores the pipeline on 4 metrics
+├── app.py               # Streamlit frontend with chat interface and source viewer
+├── .env.example         # Template for required environment variables
+├── requirements.txt     # All Python dependencies
+└── .gitignore           # Excludes API keys, venv, and large data files
+```
+
+---
+
+## Setup
+
+### 1. Clone the repo
+```bash
+git clone https://github.com/PranayCh-Sai/RAG-Document-Assistant.git
+cd RAG-Document-Assistant
+```
+
+### 2. Create a virtual environment
+```bash
+python3.10 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+### 3. Add your API key
+```bash
+cp .env.example .env
+# Open .env and add your Anthropic API key
+```
+
+### 4. Download and ingest SEC filings
+```bash
+python3.10 src/ingest.py
+```
+This downloads 10-K filings for Apple, Microsoft and Tesla, cleans the HTML, 
+chunks the text and embeds everything into ChromaDB. Takes 20-40 minutes on 
+first run.
+
+### 5. Run the app
+```bash
+streamlit run app.py
+```
+
+---
+
+## Future Plans
+
+- **Add more companies** — expand beyond Apple, Microsoft and Tesla to cover 
+  more of the S&P 500, making the system genuinely useful for financial research
+- **Reranking** — integrate FlashRank or Cohere Rerank to reorder retrieved 
+  chunks by relevance before passing to Claude, which should push Context 
+  Precision above 0.85
+- **Hybrid search** — combine vector similarity search with keyword search (BM25) 
+  for better retrieval on specific financial terms like ticker symbols and exact 
+  revenue figures
+- **Multi-document comparison** — allow users to ask comparative questions across 
+  companies, e.g. *"How does Apple's R&D spend compare to Microsoft's?"*
+- **Deploy to cloud** — host the Streamlit app on a platform like Render or 
+  Streamlit Cloud so it's publicly accessible without a local setup
+
+---
+
+## About
+
+Built by Pranay Sai — a recent Masters graduate actively looking for Data Science 
+and ML Engineering roles. This project is part of a portfolio built alongside 
+a Coursera certification in RAG and Agentic AI.
+
+Connect with me on [LinkedIn](#) or check out my other projects on [GitHub](#)
